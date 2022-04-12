@@ -7,7 +7,7 @@ Opens a shell in your favorite docker container mounting your current workspace 
 Just download the `igor.sh` and store it in your `$PATH` like this:
 
 ```shell
-sudo curl https://raw.githubusercontent.com/felixb/igor/master/igor.sh -o /usr/local/bin/igor
+sudo curl https://raw.githubusercontent.com/proum-public/igor/master/igor.sh -o /usr/local/bin/igor
 sudo chmod +x /usr/local/bin/igor
 ```
 

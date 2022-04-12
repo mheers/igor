@@ -124,14 +124,14 @@ for v in ${IGOR_MOUNTS_RO}; do
 
     # make sure directory exists
     # otherwise docker will create it with root:root permissions
-    mkdir -p "${v}"
+    [ ! -d "${v}" ] && [ ! -f "${v}" ] && mkdir -p "${v}"
 done
 for v in ${IGOR_MOUNTS_RW}; do
     args="${args} -v ${v}:${v}:rw"
 
     # make sure directory exists
     # otherwise docker will create it with root:root permissions
-    mkdir -p "${v}"
+    [ ! -d "${v}" ] && [ ! -f "${v}" ] && mkdir -p "${v}"
 done
 for e in ${IGOR_ENV}; do
     args="${args} -e ${e}=${!e}"

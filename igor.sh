@@ -2,31 +2,35 @@
 
 # This is igor.
 
-# Original project: https://github.com/felixb/igor
+# Original project: https://github.com/proum-public/igor
 
 # Install / update:
-#   sudo curl https://raw.githubusercontent.com/felixb/igor/master/igor.sh -o /usr/local/bin/igor
+#   sudo curl https://raw.githubusercontent.com/proum-public/igor/master/igor.sh -o /usr/local/bin/igor
 #   sudo chmod +x /usr/local/bin/igor
 
 set -e
+shopt -s extglob;
 
 # set up default values
-IGOR_DOCKER_IMAGE=busybox  # select docker image
-IGOR_DOCKER_COMMAND=sh     # run this command inside the docker conainer
-IGOR_DOCKER_PULL=0         # force pulling the image before starting the container (0/1)
-IGOR_DOCKER_RM=1           # remove container on exit (0/1)
-IGOR_DOCKER_TTY=1          # open an interactive tty (0/1)
-IGOR_DOCKER_USER=$(id -u)  # run commands inside the container with this user
-IGOR_DOCKER_GROUP=$(id -g) # run commands inside the container with this group
-IGOR_DOCKER_ARGS=''        # default arguments to docker run
-IGOR_PORTS=''              # space separated list of ports to expose
-IGOR_MOUNT_PASSWD=0        # mount /etc/passwd inside the container (0/1)
-IGOR_MOUNT_GROUP=0         # mount /etc/group inside the container (0/1)
-IGOR_MOUNTS_RO=''          # space separated list of volumes to mount read only
-IGOR_MOUNTS_RW=''          # space separated list of volumes to mount read write
-IGOR_WORKDIR=${PWD}        # use this workdir inside the container
-IGOR_WORKDIR_MODE=rw       # mount the workdir with this mode (ro/rw)
-IGOR_ENV=''                # space separated list of environment variables set inside the container
+IGOR_DOCKER_IMAGE=busybox         # select docker image
+IGOR_DOCKER_COMMAND=sh            # run this command inside the docker container
+IGOR_DOCKER_PULL=0                # force pulling the image before starting the container (0/1)
+IGOR_DOCKER_RM=1                  # remove container on exit (0/1)
+IGOR_DOCKER_LOGIN=0               # logging into repository before start
+IGOR_DOCKER_REPOSITORY_USERNAME=  # username used to log into repository
+IGOR_DOCKER_REPOSITORY_PASSWORD=  # password used to log into repository (leave empty for stdin)
+IGOR_DOCKER_TTY=1                 # open an interactive tty (0/1)
+IGOR_DOCKER_USER=$(id -u)         # run commands inside the container with this user
+IGOR_DOCKER_GROUP=$(id -g)        # run commands inside the container with this group
+IGOR_DOCKER_ARGS=''               # default arguments to docker run
+IGOR_PORTS=''                     # space separated list of ports to expose
+IGOR_MOUNT_PASSWD=0               # mount /etc/passwd inside the container (0/1)
+IGOR_MOUNT_GROUP=0                # mount /etc/group inside the container (0/1)
+IGOR_MOUNTS_RO=''                 # space separated list of volumes to mount read only
+IGOR_MOUNTS_RW=''                 # space separated list of volumes to mount read write
+IGOR_WORKDIR=${PWD}               # use this workdir inside the container
+IGOR_WORKDIR_MODE=rw              # mount the workdir with this mode (ro/rw)
+IGOR_ENV=''                       # space separated list of environment variables set inside the container
 
 igor_config=.igor.sh
 
@@ -54,14 +58,41 @@ function usage() {
 
 function init() {
   echo '# This is igors config' > .igor.sh
-  echo '# Original project: https://github.com/felixb/igor' >> .igor.sh
+  echo '# Original project: https://github.com/proum-public/igor' >> .igor.sh
   echo '# Install / update:' >> .igor.sh
-  echo '#   sudo curl https://raw.githubusercontent.com/felixb/igor/master/igor.sh -o /usr/local/bin/igor' >> .igor.sh
+  echo '#   sudo curl https://raw.githubusercontent.com/proum-public/igor/master/igor.sh -o /usr/local/bin/igor' >> .igor.sh
   echo '#   sudo chmod +x /usr/local/bin/igor' >> .igor.sh
   echo '' >> .igor.sh
   grep '^IGOR_' $0 >> .igor.sh
   echo 'default igor config saved to .igor.sh'
   exit 0
+}
+
+function login() {
+    IMAGE="${1}"
+    USERNAME="${2}"
+    PASSWORD="${3}"
+
+    # extract repository
+    if [[ "${IMAGE}" =~ ^([a-z0-9\.\-]+\/){1}([a-z0-9\.\-]+\/)*([a-z0-9\.\-]+)(:[a-z0-9\.\-]+)?$ ]]; then
+        REPOSITORY="${BASH_REMATCH[1]}"
+
+        if [[ -n "${PASSWORD}" ]]; then
+            echo "${PASSWORD}" \
+                | docker login \
+                -u "${USERNAME}" \
+                --password-stdin \
+                "${REPOSITORY}"
+        else
+            docker login \
+                -u "${USERNAME}" \
+                "${REPOSITORY}"
+        fi
+    else
+        echo "IGOR_DOCKER_IMAGE doesn't seem to have repository in it."
+        echo "Login not possible! Aborting."
+        exit 1
+    fi
 }
 
 # ugly command line parsing
@@ -96,6 +127,11 @@ fi
 # load config from current working dir
 if [ -e "${igor_config}" ]; then
     . "${igor_config}"
+fi
+
+# docker login
+if [ "${IGOR_DOCKER_LOGIN}" == "1" ] && [ -n "${IGOR_DOCKER_REPOSITORY_USERNAME}" ]; then
+    login "${IGOR_DOCKER_IMAGE}" "${IGOR_DOCKER_REPOSITORY_USERNAME}" "${IGOR_DOCKER_REPOSITORY_PASSWORD}"
 fi
 
 # assamble command line

@@ -167,14 +167,23 @@ for v in ${IGOR_MOUNTS_RW}; do
 
     # make sure directory exists
     # otherwise docker will create it with root:root permissions
-    [ ! -d "${v}" ] && [ ! -f "${v}" ] && mkdir -p "${v}"
+    [ ! -d "${v}" ] && [ ! -f "${v}" ] && echo "make" && mkdir -p "${v}"
 done
 for e in ${IGOR_ENV}; do
     args="${args} -e ${e}=${!e}"
 done
 
+cmd=''
+if [ -x "$(command -v docker)" ]; then
+    cmd="docker"
+elif [ -x "$(command -v podman)" ]; then
+    cmd="podman"
+else
+    echo "No container cli tool found! Aborting."
+fi
+
 # execute!
-exec docker run \
+exec ${cmd} run \
     ${args} \
     -u "${IGOR_DOCKER_USER}:${IGOR_DOCKER_GROUP}" \
     -v "${PWD}:${IGOR_WORKDIR}:${IGOR_WORKDIR_MODE}" \

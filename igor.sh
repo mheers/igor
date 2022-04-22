@@ -119,6 +119,16 @@ while [[ $# -gt 0 ]]; do
   fi
 done
 
+# check installed container-cli
+cli_cmd=''
+if [ -x "$(command -v podman)" ]; then
+    cli_cmd="podman"
+elif [ -x "$(command -v docker)" ]; then
+    cli_cmd="docker"
+else
+    echo "No container cli tool found! Aborting."
+fi
+
 # load config from home
 if [ -e "${HOME}/.igor.sh" ]; then
     . "${HOME}/.igor.sh"
@@ -173,19 +183,16 @@ for e in ${IGOR_ENV}; do
     args="${args} -e ${e}=${!e}"
 done
 
-cmd=''
-if [ -x "$(command -v docker)" ]; then
-    cmd="docker"
-elif [ -x "$(command -v podman)" ]; then
-    cmd="podman"
-else
-    echo "No container cli tool found! Aborting."
+# disable the uid/gid setting in podman
+uid_gid=''
+if [ ${cli_cmd} == 'docker' ]; then
+    uid_gid="-u "${IGOR_DOCKER_USER}:${IGOR_DOCKER_GROUP}""
 fi
 
 # execute!
-exec ${cmd} run \
+exec ${cli_cmd} run \
     ${args} \
-    -u "${IGOR_DOCKER_USER}:${IGOR_DOCKER_GROUP}" \
+    ${uid_gid} \
     -v "${PWD}:${IGOR_WORKDIR}:${IGOR_WORKDIR_MODE}" \
     -w "${IGOR_WORKDIR}" \
     ${IGOR_DOCKER_ARGS} \

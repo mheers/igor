@@ -62,6 +62,7 @@ IGOR_DOCKER_ARGS=''          # default arguments to docker run
 IGOR_PORTS=''                # space separated list of ports to expose
 IGOR_MOUNT_PASSWD=0          # mount /etc/passwd inside the container (0/1)
 IGOR_MOUNT_GROUP=0           # mount /etc/group inside the container (0/1)
+IGOR_MOUNTS=''               # space separated list of volumes to mount (can be src:dst:ro)
 IGOR_MOUNTS_RO=''            # space seperated list of volumes to mount read only
 IGOR_MOUNTS_RW=''            # space seperated list of volumes to mount read write
 IGOR_WORKDIR=${PWD}          # use this workdir inside the container

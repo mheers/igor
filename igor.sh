@@ -2,10 +2,10 @@
 
 # This is igor.
 
-# Original project: https://github.com/proum-public/igor
+# Original project: https://github.com/mheers/igor
 
 # Install / update:
-#   sudo curl https://raw.githubusercontent.com/proum-public/igor/master/igor.sh -o /usr/local/bin/igor
+#   sudo curl https://raw.githubusercontent.com/mheers/igor/master/igor.sh -o /usr/local/bin/igor
 #   sudo chmod +x /usr/local/bin/igor
 
 set -e
@@ -22,6 +22,7 @@ IGOR_DOCKER_REPOSITORY_PASSWORD=  # password used to log into repository (leave 
 IGOR_DOCKER_TTY=1                 # open an interactive tty (0/1)
 IGOR_DOCKER_USER=$(id -u)         # run commands inside the container with this user
 IGOR_DOCKER_GROUP=$(id -g)        # run commands inside the container with this group
+IGOR_DOCKER_NETWORK='bridge'      # docker network (bridge, container, host or none)
 IGOR_DOCKER_ARGS=''               # default arguments to docker run
 IGOR_PORTS=''                     # space separated list of ports to expose
 IGOR_MOUNT_PASSWD=0               # mount /etc/passwd inside the container (0/1)
@@ -58,9 +59,9 @@ function usage() {
 
 function init() {
   echo '# This is igors config' > .igor.sh
-  echo '# Original project: https://github.com/proum-public/igor' >> .igor.sh
+  echo '# Original project: https://github.com/mheers/igor' >> .igor.sh
   echo '# Install / update:' >> .igor.sh
-  echo '#   sudo curl https://raw.githubusercontent.com/proum-public/igor/master/igor.sh -o /usr/local/bin/igor' >> .igor.sh
+  echo '#   sudo curl https://raw.githubusercontent.com/mheers/igor/master/igor.sh -o /usr/local/bin/igor' >> .igor.sh
   echo '#   sudo chmod +x /usr/local/bin/igor' >> .igor.sh
   echo '' >> .igor.sh
   grep '^IGOR_' $0 >> .igor.sh
@@ -193,6 +194,7 @@ fi
 exec ${cli_cmd} run \
     ${args} \
     ${uid_gid} \
+    --network ${IGOR_DOCKER_NETWORK} \
     -v "${PWD}:${IGOR_WORKDIR}:${IGOR_WORKDIR_MODE}" \
     -w "${IGOR_WORKDIR}" \
     ${IGOR_DOCKER_ARGS} \

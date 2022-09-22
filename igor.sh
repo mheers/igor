@@ -168,17 +168,19 @@ if [ ${IGOR_MOUNT_GROUP} -gt 0 ]; then
 fi
 for v in ${IGOR_MOUNTS_RO}; do
     args="${args} -v ${v}:${v}:ro"
-
-    # make sure directory exists
+    # make sure file or directory exists
     # otherwise docker will create it with root:root permissions
-    [ ! -d "${v}" ] && [ ! -f "${v}" ] && mkdir -p "${v}"
+    if [ ! -e "${v}" ]; then
+        mkdir -p "${v}"
+    fi
 done
 for v in ${IGOR_MOUNTS_RW}; do
     args="${args} -v ${v}:${v}:rw"
-
-    # make sure directory exists
+    # make sure file or directory exists
     # otherwise docker will create it with root:root permissions
-    [ ! -d "${v}" ] && [ ! -f "${v}" ] && echo "make" && mkdir -p "${v}"
+    if [ ! -e "${v}" ]; then
+        mkdir -p "${v}"
+    fi
 done
 for e in ${IGOR_ENV}; do
     args="${args} -e ${e}=${!e}"

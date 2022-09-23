@@ -22,6 +22,7 @@ IGOR_DOCKER_REPOSITORY_PASSWORD=  # password used to log into repository (leave 
 IGOR_DOCKER_TTY=1                 # open an interactive tty (0/1)
 IGOR_DOCKER_USER=$(id -u)         # run commands inside the container with this user
 IGOR_DOCKER_GROUP=$(id -g)        # run commands inside the container with this group
+IGOR_DOCKER_GROUPS=""             # attach multiple groups to the user in the container
 IGOR_DOCKER_NETWORK='bridge'      # docker network (bridge, container, host or none)
 IGOR_DOCKER_ARGS=''               # default arguments to docker run
 IGOR_PORTS=''                     # space separated list of ports to expose
@@ -196,10 +197,18 @@ if [ ${cli_cmd} == 'docker' ]; then
     uid_gid="-u "${IGOR_DOCKER_USER}:${IGOR_DOCKER_GROUP}""
 fi
 
+groups=''
+if [ ${cli_cmd} == 'docker' ]; then
+    for g in ${IGOR_DOCKER_GROUPS}; do
+        args="${args} --group-add ${g}"
+    done
+fi
+
 # execute!
 exec ${cli_cmd} run \
     ${args} \
     ${uid_gid} \
+    ${groups} \
     --network ${IGOR_DOCKER_NETWORK} \
     -v "${PWD}:${IGOR_WORKDIR}:${IGOR_WORKDIR_MODE}" \
     -w "${IGOR_WORKDIR}" \

@@ -34,14 +34,17 @@ IGOR_MOUNTS_RW=''                 # space separated list of volumes to mount rea
 IGOR_WORKDIR=${PWD}               # use this workdir inside the container
 IGOR_WORKDIR_MODE=rw              # mount the workdir with this mode (ro/rw)
 IGOR_ENV=''                       # space separated list of environment variables set inside the container
+IGOR_UPDATE=0                     # is set to 1 if igor is run with 'update' as first argument that will update the igor image
 
 igor_config=.igor.sh
 
 function usage() {
-    echo "$0 [-v|--verbose] [-c|--config path-to-igor-config] [-i|--init] [-h|--help]"
+    echo "$0 [update] [upgrade] [-v|--verbose] [-c|--config path-to-igor-config] [-i|--init] [-h|--help]"
     echo ''
     echo 'Opens a shell in your favorite docker container mounting your current workspace into the container'
     echo ''
+    echo '  update: update the igor image'
+    echo '  upgrade: upgrade igor to the latest version'
     echo '  -c --config  specify igor config directory'
     echo '  -i --init    create empty igor config in current working directory'
     echo '  -v --verbose prints debug messages'
@@ -69,6 +72,14 @@ function init() {
   grep '^IGOR_' $0 >> .igor.sh
   echo 'default igor config saved to .igor.sh'
   exit 0
+}
+
+function upgrade() {
+    echo 'upgrading igor'
+    sudo curl https://raw.githubusercontent.com/mheers/igor/master/igor.sh -o /usr/local/bin/igor
+    sudo chmod +x /usr/local/bin/igor
+    echo 'igor upgraded'
+    exit 0
 }
 
 function login() {
@@ -116,6 +127,12 @@ while [[ $# -gt 0 ]]; do
       usage
   elif [[ "${1}" == '--' ]]; then
       shift
+      break
+  elif [[ "${1}" == 'upgrade' ]]; then
+      upgrade
+      break
+  elif [[ "${1}" == 'update' ]]; then
+      IGOR_UPDATE=1
       break
   else
       break
@@ -202,6 +219,13 @@ if [ ${cli_cmd} == 'docker' ]; then
     for g in ${IGOR_DOCKER_GROUPS}; do
         args="${args} --group-add ${g}"
     done
+fi
+
+if [ ${IGOR_UPDATE} == 1 ]; then
+    echo 'updating igor image ${IGOR_DOCKER_IMAGE}'
+    ${cli_cmd} pull "${IGOR_DOCKER_IMAGE}"
+    echo "Updated ${IGOR_DOCKER_IMAGE}"
+    exit 0
 fi
 
 # execute!
